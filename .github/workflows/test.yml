@@ -10,7 +10,7 @@ jobs:
   test:
     timeout-minutes: 5
     name: Test
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
     - 
       name: Setup
