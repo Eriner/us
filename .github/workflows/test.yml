@@ -1,0 +1,68 @@
+name: us
+on:
+  push:
+    branches: [master]
+    # implicit OR
+    tags:
+      - v*.*.*
+
+jobs:
+  test:
+    timeout-minutes: 5
+    name: Test
+    runs-on: ubuntu
+    steps:
+    - 
+      name: Setup
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - 
+      name: Checkout
+      uses: actions/checkout@v2
+    - 
+      name: Cache
+      uses: actions/cache@v1
+      id: gocache
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: ${{ runner.os }}-go-
+    - 
+      name: Lint
+      run: make lint
+    - 
+      name: Test
+      run: make test
+  
+  build:
+    timeout-minutes: 5
+    name: Docker build 
+    needs: test
+    runs-on: ubuntu
+    steps:
+    - 
+      name: QEMU
+      uses: docker/setup-qemu-action@v1
+    - 
+      name: Buildx
+      uses: docker/setup-buildx-action@v1
+    - 
+      name: Checkout
+      uses: actions/checkout@v2
+    - 
+      name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        path: .
+        file: ./Dockerfile
+        tags: |
+          lukechampine/user:latest
+        push: false
+        #username: foo # or _json_key
+        #password: bar # or json secret
+        #registry: reg.local
+        #repository: some/server
+        #platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+        platforms: linux/amd64
+        pull: true # always attempt to pull newest version of image
